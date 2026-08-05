@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Float, Environment, Instances, Instance } from "@react-three/drei";
+import { Float, Instances, Instance } from "@react-three/drei";
 import { Suspense, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useTheme } from "next-themes";
@@ -131,11 +131,23 @@ function Scene({ isDark }: { isDark: boolean }) {
 
   return (
     <>
-      <ambientLight intensity={isDark ? 0.32 : 0.55} />
-      <directionalLight position={[-4, 6, 4]} intensity={isDark ? 0.6 : 0.85} color="#fff4e0" />
+      {/*
+        Lit entirely with local lights. drei's <Environment preset> was removed
+        deliberately: it fetches an HDRI from an external CDN at runtime, which
+        the Content-Security-Policy blocks — and the resulting throw took the
+        whole landing page down in production. An app that claims to be
+        self-contained should not depend on a third-party asset host it never
+        declared, so the reflections are approximated with a fill light and a
+        rim light instead.
+      */}
+      <ambientLight intensity={isDark ? 0.4 : 0.7} />
+      <directionalLight position={[-4, 6, 4]} intensity={isDark ? 0.75 : 1.0} color="#fff4e0" />
+      {/* Cool fill from below-left, standing in for sky bounce */}
+      <directionalLight position={[3, -2, -4]} intensity={isDark ? 0.25 : 0.35} color="#7ea8d8" />
+      {/* Warm rim from behind the sun's side */}
+      <directionalLight position={[5, 3, -6]} intensity={isDark ? 0.5 : 0.4} color="#ffcf8a" />
       <Sun color={sunColor} />
       <PanelField tint={panelTint} />
-      <Environment preset={isDark ? "night" : "dawn"} />
       <fog attach="fog" args={[isDark ? "#171b26" : "#faf7f2", 8, 19]} />
     </>
   );

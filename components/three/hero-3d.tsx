@@ -1,13 +1,44 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useReducedMotion } from "motion/react";
 
 const SolarScene = dynamic(() => import("./solar-scene"), {
   ssr: false,
   loading: () => <StaticSolarFallback />,
 });
+
+/**
+ * Isolates the WebGL scene from the rest of the page.
+ *
+ * This exists because of a real production failure: a drei helper fetched an
+ * asset the CSP blocked, the throw propagated, and the entire landing page
+ * rendered blank below the header. Decorative 3D must never be able to take down
+ * the content it sits behind — so any error inside the canvas degrades silently
+ * to the static composition.
+ */
+class SceneErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("[ashraq] 3D hero failed; falling back to the static composition", {
+      message: error.message,
+    });
+  }
+
+  render() {
+    if (this.state.failed) return <StaticSolarFallback />;
+    return this.props.children;
+  }
+}
 
 /**
  * The no-WebGL / reduced-motion / low-end-device path.
@@ -71,7 +102,9 @@ export function Hero3D() {
 
   return (
     <div className="absolute inset-0" aria-hidden="true">
-      <SolarScene />
+      <SceneErrorBoundary>
+        <SolarScene />
+      </SceneErrorBoundary>
     </div>
   );
 }
