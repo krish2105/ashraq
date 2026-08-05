@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # The finance engine tests assert every flagship figure to within 1%.
+      # If these fail, the numbers in the deployed app and the written report
+      # cannot be trusted, so the build must not proceed.
+      - name: Unit tests (finance engine + AI guardrails)
+        run: npm test
+
+      # Builds with NO environment variables set, which proves the zero-API-key
+      # cold start path genuinely works rather than being assumed to.
+      - name: Production build (no secrets configured)
+        run: npm run build

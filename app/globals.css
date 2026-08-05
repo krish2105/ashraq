@@ -2,26 +2,282 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ===========================================================================
+   ASHRAQ DESIGN TOKENS
+   Warm amber/gold on deep charcoal-navy. Solar identity — deliberately the
+   opposite of a generic fintech blue, and deliberately distinct from the group
+   CapExIQ project's dark glassmorphism.
 
-@media (prefers-color-scheme: dark) {
+   Both themes are designed, not inverted: light mode is a warm off-white
+   (paper under sun), dark mode a deep charcoal-navy (dusk).
+   =========================================================================== */
+
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* --- Light theme (default) --- */
+    --bg: 40 33% 97%;              /* warm off-white */
+    --bg-subtle: 40 25% 94%;
+    --surface: 0 0% 100%;
+    --surface-raised: 40 40% 99%;
+    --border: 38 18% 87%;
+    --border-strong: 38 16% 78%;
+
+    --fg: 222 24% 12%;             /* near-black, warm-leaning */
+    --fg-muted: 220 10% 42%;
+    --fg-subtle: 220 8% 50%;
+
+    --primary: 36 78% 57%;         /* amber/gold — the solar accent */
+    --primary-strong: 33 82% 44%;
+    --primary-soft: 38 90% 92%;
+    --primary-fg: 30 40% 12%;
+
+    --accent: 200 72% 38%;         /* cool counterpoint for secondary series */
+    --accent-soft: 200 70% 93%;
+
+    --success: 152 55% 30%;
+    --success-soft: 152 45% 92%;
+    --warning: 33 88% 40%;
+    --warning-soft: 38 92% 92%;
+    --danger: 0 62% 45%;
+    --danger-soft: 0 75% 95%;
+
+    --ring: 33 82% 44%;
+
+    --shadow-color: 35 30% 40%;
+    --glass: 0 0% 100% / 0.72;
+
+    /* Chart series — distinguishable by hue AND lightness, not hue alone */
+    --chart-1: 36 78% 48%;
+    --chart-2: 200 72% 40%;
+    --chart-3: 152 48% 34%;
+    --chart-4: 280 45% 52%;
+    --chart-5: 12 72% 50%;
+
+    --radius: 0.875rem;
+  }
+
+  .dark {
+    /* --- Dark theme --- */
+    --bg: 222 22% 11%;             /* deep charcoal-navy, #171B26 range */
+    --bg-subtle: 222 20% 14%;
+    --surface: 222 20% 15%;
+    --surface-raised: 222 18% 18%;
+    --border: 220 14% 24%;
+    --border-strong: 220 13% 33%;
+
+    --fg: 40 30% 96%;
+    --fg-muted: 220 12% 72%;
+    --fg-subtle: 220 10% 58%;
+
+    --primary: 38 88% 62%;
+    --primary-strong: 36 92% 56%;
+    --primary-soft: 36 40% 22%;
+    --primary-fg: 30 45% 10%;
+
+    --accent: 197 78% 60%;
+    --accent-soft: 200 45% 20%;
+
+    --success: 152 52% 55%;
+    --success-soft: 152 35% 18%;
+    --warning: 38 92% 62%;
+    --warning-soft: 38 45% 20%;
+    --danger: 0 72% 66%;
+    --danger-soft: 0 40% 22%;
+
+    --ring: 38 88% 58%;
+
+    --shadow-color: 222 40% 3%;
+    --glass: 222 20% 15% / 0.74;
+
+    --chart-1: 38 88% 62%;
+    --chart-2: 197 78% 60%;
+    --chart-3: 152 52% 55%;
+    --chart-4: 280 60% 72%;
+    --chart-5: 12 80% 66%;
+  }
+
+  /* --- Fluid type scale: interpolates smoothly, no breakpoint jumps --- */
+  :root {
+    --step--2: clamp(0.69rem, 0.67rem + 0.12vw, 0.76rem);
+    --step--1: clamp(0.83rem, 0.79rem + 0.2vw, 0.94rem);
+    --step-0: clamp(1rem, 0.95rem + 0.25vw, 1.13rem);
+    --step-1: clamp(1.2rem, 1.12rem + 0.4vw, 1.5rem);
+    --step-2: clamp(1.44rem, 1.31rem + 0.65vw, 1.9rem);
+    --step-3: clamp(1.73rem, 1.53rem + 1vw, 2.44rem);
+    --step-4: clamp(2.07rem, 1.77rem + 1.5vw, 3.05rem);
+    --step-5: clamp(2.49rem, 2.05rem + 2.2vw, 3.82rem);
+    --step-hero: clamp(2.75rem, 1.6rem + 5.6vw, 7rem);
+
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: hsl(var(--bg));
+    color: hsl(var(--fg));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Every financial figure aligns on the decimal. A small detail that separates
+     a production dashboard from a beginner calculator. */
+  .tabular,
+  table td,
+  table th {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Visible, on-brand focus for keyboard users */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.3);
+    color: hsl(var(--fg));
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--bg-subtle));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border-strong));
+    border-radius: 99px;
+    border: 3px solid hsl(var(--bg-subtle));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--fg-subtle));
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .surface-card {
+    background-color: hsl(var(--surface));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+  }
+
+  /* Glassmorphism used surgically — nav and overlay panels only, never
+     full-viewport (backdrop-filter costs 15-30% FPS on mid-tier Android). */
+  .glass {
+    background-color: hsl(var(--glass));
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid hsl(var(--border));
+  }
+
+  .text-gradient-solar {
+    background-image: linear-gradient(
+      100deg,
+      hsl(var(--primary-strong)),
+      hsl(var(--primary)) 40%,
+      hsl(38 95% 68%) 70%,
+      hsl(var(--primary-strong))
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .section-pad {
+    padding-block: clamp(3.5rem, 8vw, 8rem);
+  }
+
+  .shell {
+    width: 100%;
+    margin-inline: auto;
+    max-width: 84rem;
+    padding-inline: clamp(1rem, 4vw, 2.5rem);
+  }
+
+  /* Hairline grid overlay — subtle depth without a heavy background image */
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.55) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.55) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .animate-shimmer {
+    animation: shimmer 2.4s linear infinite;
+  }
+  @keyframes shimmer {
+    to {
+      background-position: 200% center;
+    }
+  }
+
+  .animate-float {
+    animation: float 7s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--bg-subtle)) 25%,
+      hsl(var(--border)) 50%,
+      hsl(var(--bg-subtle)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+/* ===========================================================================
+   GLOBAL REDUCED-MOTION GUARD
+   The single most important accessibility line in the stylesheet. Everything
+   still reads and works; it simply stops moving.
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print — used by the "Export summary as PDF" flow */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+    color: black;
+  }
+  .surface-card {
+    border: 1px solid #ddd;
+    break-inside: avoid;
   }
 }
