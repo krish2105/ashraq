@@ -77,6 +77,42 @@ export interface ProjectInputs {
 
   // Real options
   capexDeclineRate: number;
+
+  /* ------------------------------------------------------------------------
+   * V2 ADDITIONS — all optional, all defaulted.
+   *
+   * These are deliberately optional so the registered base case (Section 3 of
+   * the assignment's data register) produces exactly the same numbers it always
+   * has. Nothing below silently alters a figure that has already been reported;
+   * each one either VERIFIES an existing assumption or adds a clearly-labelled
+   * extra analysis the user opts into.
+   * --------------------------------------------------------------------- */
+
+  /** Site electricity consumption, used to verify which DEWA slab solar displaces. */
+  monthlyConsumptionKwh?: number;
+
+  /** Share of generation consumed on site rather than exported. */
+  selfConsumptionRatio?: number;
+
+  /**
+   * Inverter replacement — a real mid-life cost the Section 3 register does not
+   * contain. Defaults to 0 so the registered base case is unchanged; surfaced as
+   * an explicit sensitivity, and switched on for the equal-life comparison where
+   * it genuinely bites.
+   */
+  inverterReplacementCost?: number;
+  inverterReplacementYear?: number;
+
+  /** PPA contract length. UAE PPAs run up to 25 years; the base case models 15. */
+  ppaTermYears?: number;
+
+  // Cost-of-capital build-up — derives the hurdle rate instead of asserting it.
+  riskFreeRate?: number;
+  marketRiskPremium?: number;
+  assetBeta?: number;
+  projectSpecificPremium?: number;
+  costOfDebtPreTax?: number;
+  targetDebtWeight?: number;
 }
 
 export interface CashFlowRow {

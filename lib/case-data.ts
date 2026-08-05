@@ -68,6 +68,35 @@ export const DEFAULT_INPUTS: ProjectInputs = {
 
   // Real options / delay analysis
   capexDeclineRate: 0.01,
+
+  /* --- V2 additions. None of these alter the registered base case. --- */
+
+  // Site load, used only to verify which DEWA slab solar displaces.
+  // ~450,000 kWh/month is realistic for a 15,000 sqm 24/7 cold store, and puts
+  // 2.1 GWh/yr of solar at roughly a 39% offset of total consumption.
+  monthlyConsumptionKwh: 450_000,
+
+  // Solar output never exceeds site load for a continuous refrigeration
+  // profile, so effectively everything generated is consumed on site.
+  selfConsumptionRatio: 1.0,
+
+  // Zero by default: the Section 3 data register contains no inverter
+  // replacement line, so including one silently would alter a reported figure.
+  // It is switched on explicitly in the equal-life comparison, where it matters.
+  inverterReplacementCost: 0,
+  inverterReplacementYear: 12,
+
+  // Base case models a 15-year PPA. UAE PPAs run up to 25 years — the equal-life
+  // analysis tests that longer term.
+  ppaTermYears: 15,
+
+  // Cost-of-capital build-up — derives the 10% hurdle rate from market data.
+  riskFreeRate: 0.0365,
+  marketRiskPremium: 0.055,
+  assetBeta: 0.75,
+  projectSpecificPremium: 0.029,
+  costOfDebtPreTax: 0.075,
+  targetDebtWeight: 0.7,
 };
 
 export interface AssumptionEntry {
