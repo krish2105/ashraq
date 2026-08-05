@@ -12,6 +12,7 @@
  */
 
 import { computeAll, type FullResults, type ProjectInputs } from "../finance-engine";
+import { computeEqualLifeComparison } from "../finance-engine-advanced";
 import { formatAED, formatPercent } from "../utils";
 
 export function fallbackExplain(r: FullResults): string {
@@ -57,9 +58,20 @@ export function fallbackExplain(r: FullResults): string {
     )} ${ppa.pvAtPpaRate > metrics.npv ? "more" : "less"} than owning the system outright. That gap exists because the two arrangements carry genuinely different risk: owning equipment exposes Al Waha to performance and maintenance risk, while a PPA exposes it only to the developer's credit. Discounting both at the same rate would hide that difference entirely, which is why this model applies ${formatPercent(
       inputs.discountRateCapex,
       1
-    )} to ownership and ${formatPercent(inputs.discountRatePpa, 1)} to the PPA. On the current inputs, Alternative ${
-      comparison.winner.id
-    } leads.`,
+    )} to ownership and ${formatPercent(inputs.discountRatePpa, 1)} to the PPA. Over the ${
+      inputs.projectLifeYears
+    }-year window, Alternative ${comparison.winner.id} leads.`,
+
+    // Coherence guard. The ranking above is horizon-dependent, and the Equal-life
+    // analysis reaches a different answer. Surfacing that here is not hedging —
+    // leaving two panels of the same app contradicting each other would be the error.
+    (() => {
+      const eq = computeEqualLifeComparison(r.inputs, 25);
+      if (!eq.conclusionChanged) {
+        return `That ranking also survives a longer view: extended to a common ${eq.horizonYears}-year window, with the owner charged for inverter replacement, ${eq.winner} still leads by ${formatAED(Math.abs(eq.gap))}.`;
+      }
+      return `One caveat matters more than any other here. That ranking depends on the ${inputs.projectLifeYears}-year window. The panels physically last 20 to 25 years, so truncating the comparison discards a decade in which an owner keeps generating free electricity while a ${eq.ppa.termYears}-year PPA has already expired. Re-run over a common ${eq.horizonYears}-year window, with the owner charged for inverter replacement, and ${eq.winner} leads instead — by ${formatAED(Math.abs(eq.gap))}. The two tie at a PPA contract term of ${eq.breakEvenPpaTermYears?.toFixed(1) ?? "-"} years, which makes contract tenor rather than headline rate the term to negotiate hardest. The Equal-life tab shows the working.`;
+    })(),
   ].join("\n\n");
 }
 
@@ -169,11 +181,14 @@ export function fallbackCompare(r: FullResults): string {
       2
     )}× floor shows the 70/30 structure is genuinely bankable. Treating a levered NPV as a better NPV is a common error, and this model keeps the investment and financing questions separate to avoid it.`,
 
-    `The case for ownership is not that its NPV competes — on risk-adjusted terms it does not. It is that ownership captures the whole tail: the panels physically last 20 to 25 years while this model stops at ${
-      inputs.projectLifeYears
-    }, so five to ten years of essentially free generation accrue only to an owner, and the asset sits on Al Waha's balance sheet. The PPA trades that upside for contractual certainty and zero capital commitment. That is a genuine strategic choice, not a rounding difference — and on NPV alone, Alternative ${
-      comparison.winner.id
-    } currently leads.`,
+    (() => {
+      const eq = computeEqualLifeComparison(r.inputs, 25);
+      const tie = eq.breakEvenPpaTermYears?.toFixed(1) ?? "-";
+      if (eq.conclusionChanged) {
+        return `The tail argument for ownership is usually stated qualitatively; here it can be measured, and measuring it changes the answer. The panels last 20 to 25 years while the base comparison stops at ${inputs.projectLifeYears}, so truncation quietly discards a decade in which an owner still generates and a ${eq.ppa.termYears}-year PPA has expired. Re-run over a common ${eq.horizonYears}-year window — charging the owner for inverter replacement, which the base case omits — and ${eq.winner} leads by ${formatAED(Math.abs(eq.gap))}. The two tie at a PPA term of ${tie} years. So the ranking is not really a contest between owning and contracting; it is a question about contract tenor, which is negotiable in a way that discount rates and tariffs are not. A ${eq.ppa.termYears}-year offer at AED ${inputs.ppaRate.toFixed(2)}/kWh loses to ownership; a 25-year offer at the same rate wins.`;
+      }
+      return `Ownership's remaining argument is the tail: the panels last 20 to 25 years while this comparison stops at ${inputs.projectLifeYears}, so several years of essentially free generation accrue only to an owner, and the asset sits on the balance sheet. Tested over a common ${eq.horizonYears}-year window with inverter replacement charged, ${eq.winner} still leads by ${formatAED(Math.abs(eq.gap))} — the ranking survives the longer view rather than depending on the shorter one.`;
+    })(),
   ].join("\n\n");
 }
 
@@ -192,6 +207,11 @@ export function fallbackRecommend(r: FullResults): {
     body: [
       recommendation.rationale.join(" "),
       recommendation.structureNote,
+      (() => {
+        const eq = computeEqualLifeComparison(r.inputs, 25);
+        if (!eq.conclusionChanged) return "";
+        return `Before acting on the ranking above, note that it is horizon-dependent. Over a common ${eq.horizonYears}-year window with inverter replacement charged to the owner, ${eq.winner} leads by ${formatAED(Math.abs(eq.gap))}, and the two alternatives tie at a PPA contract term of ${eq.breakEvenPpaTermYears?.toFixed(1) ?? "-"} years. That reframes the negotiation: tenor decides this, not the headline rate.`;
+      })(),
       `In short: the solar investment itself is not in serious doubt — it clears the ${formatPercent(
         inputs.discountRateCapex,
         1
@@ -200,7 +220,9 @@ export function fallbackRecommend(r: FullResults): {
       } years. What remains genuinely open is the ownership structure, because the ${formatAED(
         Math.abs(ppa.pvAtPpaRate - metrics.npv)
       )} gap between owning and contracting rests on two estimated inputs rather than quoted terms. Proceeding in principle while benchmarking real PPA bids is the financially responsible sequence.`,
-    ].join("\n\n"),
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
   };
 }
 

@@ -18,15 +18,22 @@ import { FinancingPanel } from "./panels/financing-panel";
 import { EsgPanel } from "./panels/esg-panel";
 import { DelayPanel } from "./panels/delay-panel";
 import { SolarCalibration } from "./solar-calibration";
+import { RigourPanel } from "./panels/rigour-panel";
+import { HorizonPanel } from "./panels/horizon-panel";
+import { OperationsPanel } from "./panels/operations-panel";
+import { RateCrossover } from "./panels/rate-crossover";
 import { cn, formatAED, formatPercent } from "@/lib/utils";
 import { SlidersHorizontal, AlertTriangle } from "lucide-react";
 
 const TABS = [
   { id: "cashflow", label: "Cash flows" },
   { id: "comparison", label: "Comparison" },
+  { id: "horizon", label: "Equal-life" },
+  { id: "rigour", label: "Verifications" },
   { id: "sensitivity", label: "Sensitivity" },
   { id: "scenarios", label: "Scenarios" },
   { id: "montecarlo", label: "Monte Carlo" },
+  { id: "operations", label: "Operations" },
   { id: "financing", label: "Financing" },
   { id: "esg", label: "ESG" },
   { id: "delay", label: "Delay" },
@@ -188,8 +195,24 @@ export function Dashboard() {
                 <PanelErrorBoundary panelName="comparison">
                   <div className="space-y-8">
                     <ComparisonPanel results={results} />
+                    <RateCrossover />
                     <ComparePanel />
                   </div>
+                </PanelErrorBoundary>
+              )}
+              {tab === "horizon" && (
+                <PanelErrorBoundary panelName="equal-life comparison">
+                  <HorizonPanel />
+                </PanelErrorBoundary>
+              )}
+              {tab === "rigour" && (
+                <PanelErrorBoundary panelName="verifications">
+                  <RigourPanel />
+                </PanelErrorBoundary>
+              )}
+              {tab === "operations" && (
+                <PanelErrorBoundary panelName="operations">
+                  <OperationsPanel />
                 </PanelErrorBoundary>
               )}
               {tab === "sensitivity" && (

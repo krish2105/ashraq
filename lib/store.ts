@@ -9,11 +9,14 @@ import {
   type FullResults,
   type MonteCarloResult,
 } from "./finance-engine";
+import { computeAdvanced, type AdvancedResults } from "./finance-engine-advanced";
 import { validateInputs } from "./schema";
 
 interface AshraqState {
   inputs: ProjectInputs;
   results: FullResults;
+  /** Slab verification, cost-of-capital build-up, APV, EAA, equal-life, flips. */
+  advanced: AdvancedResults;
   monteCarlo: MonteCarloResult | null;
   monteCarloRunning: boolean;
   errors: Record<string, string>;
@@ -53,6 +56,7 @@ export const useAshraqStore = create<AshraqState>()(
     (set, get) => ({
       inputs: DEFAULT_INPUTS,
       results: computeAll(DEFAULT_INPUTS),
+      advanced: computeAdvanced(DEFAULT_INPUTS),
       monteCarlo: null,
       monteCarloRunning: false,
       errors: {},
@@ -68,6 +72,7 @@ export const useAshraqStore = create<AshraqState>()(
           // Only recompute from a valid input set — never let a half-typed field
           // push NaN into the dashboard.
           results: Object.keys(errors).length === 0 ? computeAll(next, get().monteCarlo?.probabilityPositive) : get().results,
+          advanced: Object.keys(errors).length === 0 ? computeAdvanced(next) : get().advanced,
           // Any input change invalidates the previous simulation.
           monteCarlo: null,
         });
@@ -80,6 +85,7 @@ export const useAshraqStore = create<AshraqState>()(
           inputs: next,
           errors,
           results: Object.keys(errors).length === 0 ? computeAll(next) : get().results,
+          advanced: Object.keys(errors).length === 0 ? computeAdvanced(next) : get().advanced,
           monteCarlo: null,
         });
       },
@@ -88,6 +94,7 @@ export const useAshraqStore = create<AshraqState>()(
         set({
           inputs: DEFAULT_INPUTS,
           results: computeAll(DEFAULT_INPUTS),
+          advanced: computeAdvanced(DEFAULT_INPUTS),
           errors: {},
           caseLoaded: true,
           monteCarlo: null,
@@ -98,6 +105,7 @@ export const useAshraqStore = create<AshraqState>()(
         set({
           inputs: BLANK_INPUTS,
           results: computeAll(DEFAULT_INPUTS),
+          advanced: computeAdvanced(DEFAULT_INPUTS),
           errors: validateInputs(BLANK_INPUTS).errors,
           caseLoaded: false,
           monteCarlo: null,
@@ -123,6 +131,7 @@ export const useAshraqStore = create<AshraqState>()(
             Object.keys(errors).length === 0
               ? computeAll(inputs, monteCarlo?.probabilityPositive)
               : get().results,
+          advanced: Object.keys(errors).length === 0 ? computeAdvanced(inputs) : get().advanced,
         });
       },
     }),
