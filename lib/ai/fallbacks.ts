@@ -154,7 +154,7 @@ export function fallbackRisks(r: FullResults): {
 }
 
 export function fallbackCompare(r: FullResults): string {
-  const { comparison, metrics, ppa, inputs, financing } = r;
+  const { metrics, ppa, inputs, financing } = r;
 
   return [
     `Measured against the do-nothing baseline (Alternative C), both solar alternatives create value decisively. Owning the system outright (Alternative A) produces an NPV of ${formatAED(
@@ -334,6 +334,43 @@ export function fallbackAsk(question: string, r: FullResults): string {
   }
 
   const route = (() => {
+    // --- Methodology routes. The eval harness surfaced these as a real gap:
+    // without them, conceptual questions fell through to a generic figure dump,
+    // which is a poor answer even if it contains no wrong numbers. ---
+    if (/(mirr|modified irr|difference between irr)/.test(q))
+      return `IRR assumes every interim cash flow is reinvested at the IRR itself — ${
+        r.metrics.irr === null ? "the project's own return" : formatPercent(r.metrics.irr)
+      } — which is usually unrealistic. MIRR corrects that by assuming reinvestment at the cost of capital instead, which is why it comes out lower at ${
+        r.metrics.mirr === null ? "—" : formatPercent(r.metrics.mirr)
+      }. MIRR is the more conservative and generally more defensible of the two.`;
+    if (/(depreciation|added back|non.?cash|tax shield)/.test(q))
+      return `Depreciation is subtracted to work out taxable profit, then added straight back, because it is a non-cash charge — no money actually leaves the business. The net effect is the depreciation tax shield: at ${formatPercent(
+        r.effectiveTaxRate,
+        0
+      )} tax on AED ${Math.round(
+        r.cashFlows[1]?.depreciation ?? 0
+      ).toLocaleString()} of annual depreciation, it is worth roughly AED ${Math.round(
+        (r.cashFlows[1]?.depreciation ?? 0) * r.effectiveTaxRate
+      ).toLocaleString()} of cash a year.`;
+    if (/(qfzp|free zone|9%|tax rate|corporate tax)/.test(q))
+      return `The model uses the standard ${formatPercent(
+        r.inputs.taxRate,
+        0
+      )} UAE corporate rate and deliberately does NOT claim Qualifying Free Zone Person status. Dubai Investments Park is a Free Zone, so Al Waha could test for QFZP — but property-linked activity is an excluded activity, and a cold-chain operator's mostly-mainland customer base risks breaching the de-minimis threshold, which would forfeit the status entity-wide. The conservative rate is the defensible modelling choice; confirming QFZP would need a professional tax ruling, not an assumption.`;
+    if (/(alternative d|same npv|financ.*(not change|separate)|why.*d.*same)/.test(q))
+      return `Because financing does not change what an investment is worth. Whether the project is worth doing is judged on its unlevered cash flows at the hurdle rate; borrowing changes who puts up the money and how the returns are split, not the value of the asset. Alternative D is therefore judged on debt service coverage instead — a minimum DSCR of ${r.financing.minDscr.toFixed(
+        2
+      )}x against a ${r.financing.covenantFloor.toFixed(
+        2
+      )}x covenant floor. Presenting a levered NPV as a better NPV is a common error this model is built to avoid.`;
+    if (/(upfront|initial|total cost|how much.*(cost|invest|spend)|capex|outlay|capital required)/.test(q))
+      return `The total upfront outflow is ${formatAED(
+        r.metrics.initialOutflow
+      )} — ${formatAED(
+        r.metrics.totalCapex
+      )} of capital expenditure (equipment, installation, transport and the DEWA connection) plus ${formatAED(
+        r.inputs.workingCapital
+      )} of working capital held as an O&M spares reserve, which is recovered in full at the end of the project.`;
     if (/(tariff|dewa|electricity price)/.test(q))
       return `The model assumes a blended avoided tariff of AED ${r.inputs.tariffYear1.toFixed(
         2

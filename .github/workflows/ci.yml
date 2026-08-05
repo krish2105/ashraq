@@ -34,6 +34,12 @@ jobs:
       - name: Unit tests (finance engine + AI guardrails)
         run: npm test
 
+      # The AI eval harness. Hard gates (numeric accuracy, refusal correctness,
+      # content leakage) block the build; soft metrics are reported only. Runs on
+      # the deterministic path, which is exactly what this deployment ships.
+      - name: AI evaluation harness
+        run: npm run eval
+
       # Builds with NO environment variables set, which proves the zero-API-key
       # cold start path genuinely works rather than being assumed to.
       - name: Production build (no secrets configured)
